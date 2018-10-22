@@ -4,6 +4,12 @@ Aurelia CLI was used to create the ClientApp dir, the Aurelia template files fro
 
 https://github.com/aurelia/skeleton-navigation/tree/master/skeleton-typescript-webpack
 
+Fixed issue in template where hamburger menu does not collapse after selecting menu item.
+
+Added Sass support to webpack config and scss files to allow bootstrap v4 customisation and compilation.
+
+Updated the nav-bar style to make it look more like the previous bootstrap v3 nav-bar in the Aurelia skeletons
+
 TODO: Fix the broken karma tests, they work in the skeleton-typescript-webpack configuration(despite at-loader errors showing) but not in this. Note: at-loader  is not used in the CLI generated config.
 
 ## Running and building
@@ -113,7 +119,7 @@ Integration tests can be performed with [Protractor](http://angular.github.io/pr
 
 # Build Notes (steps followed to create this project)
 
-### Install the Aurelia CLI
+#### Install the Aurelia CLI
 ```npm install aurelia-cli -g```
 
 ### Aurelia Project Creation and Configuration
@@ -161,9 +167,15 @@ Add files from the 'src' and 'test' dir's from the Aurelia Skeleton Navigation r
   npm install popper.js@latest
   ```
 
+Fix npm warnings:
+```
+npm install karma-webpack@next --save-dev
+npm install ajv@6 --save-dev
+```
+
 ### Update Webpack configuration
 
-To enable jquery support in bootstrap (to make the hamburger menu work on small screens), make the following changes to webpack.conf.js
+To enable jquery support in bootstrap (to make the small screen hamburger menu work), make the following changes to webpack.conf.js
 
 Replace the line: `vendor: ['bluebird'],`
 
@@ -195,5 +207,26 @@ new ProvidePlugin({
   Popper: ['popper.js', 'default'] // Bootstrap 4 Dependency.
 }),
 ```
+
+### Adding support for bootstrap customisation and compilation
+
+
+#### Install additional required packages:
+
+```
+  npm install exports-loader autoprefixer postcss-loader --save-dev
+```
+
+Add sass dir with files: _bootstrap-custom.scss and app.scss
+
+Edit main.ts to reference app.scss
+
+Update webpack.config.js as detailed in the documentation:
+
+https://getbootstrap.com/docs/4.0/getting-started/webpack/
+
+https://getbootstrap.com/docs/4.0/getting-started/theming/
+
+
 
 

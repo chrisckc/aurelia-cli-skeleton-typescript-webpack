@@ -1,0 +1,16 @@
+// Bootstrap v4 scss variable overrides
+// Refer to node_modules/bootstrap/scss/_variables.scss
+// https://getbootstrap.com/docs/4.0/getting-started/theming/
+
+//$body-bg: #000;
+//$body-color: #111;
+$enable-gradients: true;
+$enable-shadows: true;
+
+// modifies the global spacing variable
+// $spacer: 1rem;
+
+// required to make the active state look correct
+$navbar-padding-y: 0;
+
+

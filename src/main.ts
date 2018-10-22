@@ -1,8 +1,11 @@
 /// <reference types="aurelia-loader-webpack/src/webpack-hot-interface"/>
-import '../static/styles.css';
 // we want font-awesome to load as soon as possible to show the fa-spinner
 import 'font-awesome/css/font-awesome.css';
-import 'bootstrap/dist/css/bootstrap.css';
+//import 'bootstrap/dist/css/bootstrap.css';
+// bootstrap v4 is imported via app.scss to allow for customisation
+import '../sass/app.scss';
+import '../static/styles.css'; // we want our styles added last
+
 import {Aurelia} from 'aurelia-framework'
 import environment from './environment';
 import {PLATFORM} from 'aurelia-pal';
