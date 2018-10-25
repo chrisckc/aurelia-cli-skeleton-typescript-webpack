@@ -22,6 +22,8 @@ Incorporated fix from here: https://github.com/aurelia/cli/issues/956
 
 TODO: Fix the broken karma tests, they work in the skeleton-typescript-webpack configuration(despite at-loader errors showing) but not in this. Note: at-loader  is not used in the CLI generated config.
 
+Refer to the build notes at the bottom of this readme for more details
+
 ## Running and building
 
 #### Run in dev mode
