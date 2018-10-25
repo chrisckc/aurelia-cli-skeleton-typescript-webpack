@@ -1,0 +1,14 @@
+// Variables
+//
+// Make the Bootstrap variables available to reference here
+@import "~bootstrap/scss/functions";
+@import "~bootstrap/scss/variables";
+@import "~bootstrap/scss/mixins";
+
+// Variables should follow the `$component-state-property-size` formula for
+// consistent naming. Ex: $nav-link-disabled-color and $modal-content-box-shadow-xs.
+
+// make the navbar height more like bootstrap v3
+$navbar-height: 50px;
+
+$nav-active-colour: $gray-200;

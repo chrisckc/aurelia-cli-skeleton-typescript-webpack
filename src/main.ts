@@ -1,10 +1,19 @@
 /// <reference types="aurelia-loader-webpack/src/webpack-hot-interface"/>
 // we want font-awesome to load as soon as possible to show the fa-spinner
 import 'font-awesome/css/font-awesome.css';
-//import 'bootstrap/dist/css/bootstrap.css';
-// bootstrap v4 is imported via app.scss to allow for customisation
+
+//import 'bootstrap/dist/css/bootstrap.css'; // do this if not using sass
+
+// Bootstrap v4 is imported using Sass via bootstrap.scss to allow for customisation
+// The bootstrap.scss and app.scss are kept separate and imported separately here
+// this makes it easy to configure webpack to place the bootstrap css in a separate chunk from the app css
+import '../sass/bootstrap.scss';
 import '../sass/app.scss';
 import '../static/styles.css'; // we want our styles added last
+
+// Allows the Bootstrap jQuery Extensions to be used in code
+//import 'bootstrap'; // Dont' import all of the bootstrap js unless using all of it
+import 'bootstrap/js/dist/collapse';
 
 import {Aurelia} from 'aurelia-framework'
 import environment from './environment';

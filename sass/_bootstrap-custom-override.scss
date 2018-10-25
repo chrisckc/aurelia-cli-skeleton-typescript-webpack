@@ -1,0 +1,5 @@
+// Add entries here to override existing bootstrap v4 styles that do not have scss variables defined
+
+.form-control[readonly] {
+  background-color: $gray-100;
+}

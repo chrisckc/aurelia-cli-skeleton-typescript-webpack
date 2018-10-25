@@ -1,24 +1,41 @@
-// Bootstrap sass customisations
-@import "bootstrap-custom";
+// Variables for the app to be imported in other Sass files spread throughout the app
+@import "app-variables";
 
-// Bootstrap and its default variables
-@import "~bootstrap/scss/bootstrap";
+// Main layout styles
 
-// Alternatively, you may import parts of Boostrap individually as needed.
-// Note that Bootstrap’s functions, variables and mixins are required.
-// See the boostrap.scss file for the full import stack.
+// makes the navbar look more like bootstrap v3
+.navbar {
+  border: 1px solid transparent;
+  border-color: $gray-200;
+  min-height: $navbar-height;
+  padding: 0;
+}
 
-// // Required
-// @import "~bootstrap/scss/functions";
-// @import "~bootstrap/scss/variables";
-// @import "~bootstrap/scss/mixins";
+// center the nav logo
+.navbar-brand {
+  padding: 0.6rem 0.5rem;
+  min-height: $navbar-height;
+}
 
-// // Optional
-// @import "~bootstrap/scss/reboot";
-// @import "~bootstrap/scss/type";
-// @import "~bootstrap/scss/images";
-// @import "~bootstrap/scss/code";
-// @import "~bootstrap/scss/grid";
+.navbar-toggler {
+  margin-right: 0.5rem;
+}
 
-// overrides for styles that do not have sass variables defined, must be last
-@import "bootstrap-override";
+.nav-item {
+  min-height: $navbar-height;
+  padding: 0 0.5rem;
+}
+
+// makes the navbar active link look more like bootstrap v3
+nav .active {
+  color: #555;
+  background-color: $gray-200
+}
+
+// center the nav links
+.nav-link {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+

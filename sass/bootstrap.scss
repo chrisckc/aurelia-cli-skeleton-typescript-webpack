@@ -1,0 +1,25 @@
+// Bootstrap sass customisations, import before bootstrap
+@import "bootstrap-custom-variables";
+
+// The ~ (tilde) points to the node_modules folder
+// Bootstrap and its default variables
+@import "~bootstrap/scss/bootstrap";
+
+// Alternatively, you may import parts of Boostrap individually as needed.
+// Note that Bootstrap’s functions, variables and mixins are required.
+// See the boostrap.scss file for the full import stack.
+
+// // Required
+// @import "~bootstrap/scss/functions";
+// @import "~bootstrap/scss/variables";
+// @import "~bootstrap/scss/mixins";
+
+// // Optional
+// @import "~bootstrap/scss/reboot";
+// @import "~bootstrap/scss/type";
+// @import "~bootstrap/scss/images";
+// @import "~bootstrap/scss/code";
+// @import "~bootstrap/scss/grid";
+
+// bootstrap overrides for styles that do not have Sass variables defined, must be after importing bootstrap
+@import "bootstrap-custom-override";

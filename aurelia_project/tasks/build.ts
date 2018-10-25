@@ -10,11 +10,11 @@ const analyze = CLIOptions.hasFlag('analyze');
 const buildOptions = new Configuration(project.build.options);
 const production = CLIOptions.getEnvironment() === 'prod';
 const server = buildOptions.isApplicable('server');
-const extractCss = buildOptions.isApplicable('extractCss');
+const extractCss = buildOptions.isApplicable('extractCss') || CLIOptions.hasFlag('extractCss'); // Added to support --extractCss on the CLI commandline
 const coverage = buildOptions.isApplicable('coverage');
 
 const config = webpackConfig({
-  production, server, extractCss, coverage, analyze
+  production, server, extractCss, coverage, analyze, karma: null
 });
 const compiler = webpack(<any>config);
 
@@ -23,7 +23,8 @@ function buildWebpack(done) {
     compiler.watch({}, onBuild);
   } else {
     compiler.run(onBuild);
-    compiler.hooks.done.tap('AureliaCLI', done);
+    //compiler.hooks.done.tap('AureliaCLI', done);
+    compiler.hooks.done.tap('done', () => done()); // fix from here: https://github.com/aurelia/cli/issues/956
   }
 }
 
