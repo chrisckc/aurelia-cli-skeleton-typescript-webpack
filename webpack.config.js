@@ -20,7 +20,7 @@ const title = 'Aurelia Navigation Skeleton';
 const outDir = path.resolve(__dirname, project.platform.output);
 const srcDir = path.resolve(__dirname, 'src');
 const nodeModulesDir = path.resolve(__dirname, 'node_modules');
-const baseUrl = '/';
+const baseUrl = '/app';
 
 // used in the rules sections below
 const cssRules = [
@@ -253,7 +253,7 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
     })),
     // ref: https://webpack.js.org/plugins/copy-webpack-plugin/
     ...when(production || server, new CopyWebpackPlugin([
-      { from: 'static', to: outDir, ignore: [ '*.css' ] } // don't copy css files as they are picked up by the rules
+      { from: 'static/favicon.ico', to: 'favicon.ico' },
     ])),
     ...when(analyze, new BundleAnalyzerPlugin({ analyzerPort: 9080 }))  // changed the port from 8888 to 9080
   ]
