@@ -19,44 +19,38 @@ const when = (condition, config, negativeConfig) =>
 const title = 'Aurelia Navigation Skeleton';
 const outDir = path.resolve(__dirname, project.platform.output);
 const srcDir = path.resolve(__dirname, 'src');
+const staticDir = path.resolve(__dirname, 'static');
+const assetsDir = path.resolve(srcDir, 'assets');
+const imageDir = path.resolve(assetsDir, 'images');
+const sassDir = path.resolve(assetsDir, 'sass');
 const nodeModulesDir = path.resolve(__dirname, 'node_modules');
 const baseUrl = '/';
 
-// used in the rules sections below
+// used in the css rules sections below
 const cssRules = [
   { loader: 'css-loader' },
-];
-
-// used in the rules sections below
-const sassRules = [
-  {
-    loader: 'css-loader' // Interprets `@import` and `url()` like `import/require()` and will resolve them
-  },
-  {
-    loader: 'postcss-loader', // Loader for webpack to process CSS with PostCSS
-    options: {
-      plugins: function () {
-        return [
-          require('autoprefixer')
-        ];
-      }
-    }
-  },
-  {
-    loader: 'sass-loader' // Loads a SASS/SCSS file and compiles it to CSS
+  { loader: 'postcss-loader',
+    options: { plugins: () => [ require('autoprefixer') ] }
   }
 ];
 
+// used in the sass rules sections below
+const sassRules = cssRules.concat([
+  { loader: 'sass-loader', // Loads a SASS/SCSS file and compiles it to CSS
+    options: { includePaths: [ sassDir ] } // allows sass files in src/assets/sass to imported in other sass files without the path
+  }
+]);
+
 module.exports = ({production, server, extractCss, coverage, analyze, karma} = {}) => ({
   resolve: {
-    extensions: ['.ts', '.js'],
-    modules: [srcDir, 'node_modules'],
+    extensions: [ '.ts', '.tsx', '.js' ],
+    modules: [ srcDir, 'node_modules' ],
     // Enforce single aurelia-binding, to avoid v1/v2 duplication due to
     // out-of-date dependencies on 3rd party aurelia plugins
     alias: { 'aurelia-binding': path.resolve(__dirname, 'node_modules/aurelia-binding') }
   },
   entry: {
-    app: ['aurelia-bootstrapper'],
+    app: [ 'aurelia-bootstrapper' ],
     // vendor: ['bluebird', 'jquery', 'bootstrap'], // Removed in favour of webpack4 optimization.splitChunks
   },
   mode: production ? 'production' : 'development',
@@ -104,6 +98,12 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
           enforce: true,
           priority: 30
         },
+        aureliaFetchClient: {
+          test: /[\\/]node_modules[\\/]aurelia-fetch-client[\\/]/,
+          name: "vendor.app.0",
+          enforce: true,
+          priority: 29
+        },
         aureliaBinding: {
           test: /[\\/]node_modules[\\/]aurelia-binding[\\/]/,
           name: "vendor.app.1",
@@ -149,9 +149,10 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
   },
   performance: { hints: false },
   devServer: {
-    contentBase: outDir,
+    contentBase: false,
     // serve index.html for all 404 (required for push-state)
-    historyApiFallback: true
+    historyApiFallback: true,
+    overlay: { warnings: true, errors: true }  
   },
   devtool: production ? 'nosources-source-map' : 'cheap-module-eval-source-map',
   module: {
@@ -161,46 +162,48 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
       {
         test: /\.css$/i,
         issuer: [{ not: [{ test: /\.html$/i }] }],
-        use: extractCss ? [{
-            loader: MiniCssExtractPlugin.loader  // When the extractCss webpack option is used, use the MiniCssExtractPlugin.
-          }, 'css-loader'] : ['style-loader', ...cssRules]
+        // When the extractCss webpack option is used, use the MiniCssExtractPlugin, else style-loader
+        // style-loader adds CSS to the DOM by injecting a `<style>` tag
+        use: [{ loader: extractCss ? MiniCssExtractPlugin.loader  : 'style-loader' }, ...cssRules ]
       },
       {
         test: /\.css$/i,
         issuer: [{ test: /\.html$/i }],
-        // CSS required in templates cannot be extracted safely
-        // because Aurelia would try to require it again in runtime
+        // CSS required in templates cannot be extracted safely because Aurelia would try to require it again in runtime
         use: cssRules
       },
       // TODO: figure out how to extract bootstrap styles into separate css file  https://github.com/webpack-contrib/mini-css-extract-plugin/issues/45
       // DONE: achieved via optimization.splitChunks instead
       {
-        test: /\.sass$|\.scss$/,
+        test: /\.sass$|\.scss$/i,
         issuer: /\.[tj]s$/i,
-        use: [
-          {
-            loader: extractCss ? MiniCssExtractPlugin.loader : 'style-loader' // style-loader adds CSS to the DOM by injecting a `<style>` tag
-          },
-          ... sassRules
-        ]
+        use: [{ loader: extractCss ? MiniCssExtractPlugin.loader : 'style-loader' }, ... sassRules ]
       },
       {
-        test: /\.sass$|\.scss$/,
+        test: /\.sass$|\.scss$/i,
         issuer: /\.html?$/i,
         use: sassRules
       },
       { test: /\.html$/i, loader: 'html-loader' },
-      { test: /\.ts$/, loader: "ts-loader" },
+      { test: /\.tsx?$/i, loader: "ts-loader" },
       // use Bluebird as the global Promise implementation:
       { test: /[\/\\]node_modules[\/\\]bluebird[\/\\].+\.js$/, loader: 'expose-loader?Promise' },
       // exposes jQuery globally as $ and as jQuery:
       { test: require.resolve('jquery'), loader: 'expose-loader?$!expose-loader?jQuery' },
-      // embed small images and fonts as Data Urls and larger ones as files:
-      { test: /\.(png|gif|jpg|cur)$/i, loader: 'url-loader', options: { limit: 8192 } },
-      { test: /\.woff2(\?v=[0-9]\.[0-9]\.[0-9])?$/i, loader: 'url-loader', options: { limit: 10000, mimetype: 'application/font-woff2' } },
-      { test: /\.woff(\?v=[0-9]\.[0-9]\.[0-9])?$/i, loader: 'url-loader', options: { limit: 10000, mimetype: 'application/font-woff' } },
-      // load these fonts normally, as files:
-      { test: /\.(ttf|eot|svg|otf)(\?v=[0-9]\.[0-9]\.[0-9])?$/i, loader: 'file-loader' },
+      // embed small images as Data Urls and larger ones as files: also matches versioned files such as .png?snv7e7vns43
+      { test: /\.(png|jpe?g|gif)(\?.*)?$/i, loader: 'url-loader', options: { limit: 8192, name: '[name].[hash].[ext]', outputPath: './images/' } },
+      // matches svg files in the assets/images dir
+      { test: /\.svg(\?.*)?$/i, include: [ imageDir ], loader: 'url-loader', options: { limit: 8192, name: '[name].[hash].[ext]', outputPath: './images/' } },
+      // matches media files .mp4 etc.
+      { test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/i, loader: 'url-loader', options: { limit: 8192, name: '[name].[hash].[ext]', outputPath: './media/' } },
+      // matches woff font files
+      { test: /\.woff2(\?.*)?$/i, loader: 'url-loader', options: { limit: 10000, mimetype: 'application/font-woff2', name: '[name].[hash].[ext]', outputPath: './fonts/' } },
+      { test: /\.woff(\?.*)?$/i, loader: 'url-loader', options: { limit: 10000, mimetype: 'application/font-woff', name: '[name].[hash].[ext]', outputPath: './fonts/' } },
+      // matches other font files, load these fonts normally, as files:
+      { test: /\.(ttf|eot|svg|otf|cur)(\?.*)?$/i,
+        exclude: [ imageDir ], //exclude any svg files in 'assets/images' dir
+        loader: 'file-loader', options: { name: '[name].[hash].[ext]', outputPath: './fonts/' },
+      },
       ...when(coverage, {
         test: /\.[jt]s$/i, loader: 'istanbul-instrumenter-loader',
         include: srcDir, exclude: [/\.{spec,test}\.[jt]s$/i],
@@ -251,9 +254,11 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
       filename: production ? '[name].[contenthash].bundle.css' : '[name].[hash].bundle.css',
       chunkFilename: production ? '[name].[contenthash].chunk.css' : '[name].[hash].chunk.css'
     })),
+    // url-loader handles bundling of png/jpg/gif/svg etc.
+    // We only need to specify files here that are not referenced in the source files
     // ref: https://webpack.js.org/plugins/copy-webpack-plugin/
     ...when(production || server, new CopyWebpackPlugin([
-      { from: 'static', to: outDir, ignore: [ '*.css' ] } // don't copy css files as they are picked up by the rules
+      { from: 'static', to: outDir, ignore: ['.*'] } // ignore dot (hidden) files
     ])),
     ...when(analyze, new BundleAnalyzerPlugin({ analyzerPort: 9080 }))  // changed the port from 8888 to 9080
   ]

@@ -7,9 +7,9 @@ import 'font-awesome/css/font-awesome.css';
 // Bootstrap v4 is imported using Sass via bootstrap.scss to allow for customisation
 // The bootstrap.scss and app.scss are kept separate and imported separately here
 // this makes it easy to configure webpack to place the bootstrap css in a separate chunk from the app css
-import '../sass/bootstrap.scss';
-import '../sass/app.scss';
-import '../static/styles.css'; // we want our styles added last
+import 'assets/sass/bootstrap.scss';
+import 'assets/sass/app.scss';
+import 'assets/styles.css'; // we want our styles added last
 
 // Allows the Bootstrap jQuery Extensions to be used in code
 //import 'bootstrap'; // Dont' import all of the bootstrap js unless using all of it
