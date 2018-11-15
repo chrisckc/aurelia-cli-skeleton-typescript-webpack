@@ -97,5 +97,8 @@ module.exports = {
       },
     },
     serve: 'http-server dist --cors',
+    // to use the command below: npm install -g static-http2-server
+    // then generate a self signed key/cert in pem format
+    serveHttps: 'http2-server dist --cors --ssl --key localhost.pem --cert localhost.pem',
   },
 }
