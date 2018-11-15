@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -50,8 +51,7 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
     alias: { 'aurelia-binding': path.resolve(__dirname, 'node_modules/aurelia-binding') }
   },
   entry: {
-    app: [ 'aurelia-bootstrapper' ],
-    // vendor: ['bluebird', 'jquery', 'bootstrap'], // Removed in favour of webpack4 optimization.splitChunks
+    app: [ 'aurelia-bootstrapper' ], // the entry bundle will be named 'app'
   },
   mode: production ? 'production' : 'development',
   output: {
@@ -61,80 +61,118 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
     sourceMapFilename: production ? '[name].[chunkhash].map' : '[name].[hash].map',
     chunkFilename: production ? '[name].[chunkhash].chunk.js' : '[name].[hash].chunk.js'
   },
-  // DONE: added UglifyJsPlugin and  OptimizeCSSAssetsPlugin, ref https://webpack.js.org/plugins/mini-css-extract-plugin/#minimizing-for-production
   optimization: {
-    // It seems that webpack requires some help in splitting up aurelia, jquery and bootstrap etc. from the main app bundle
-    // If we don't split it up we end up with large app and vendor files > 1MB 
+    runtimeChunk: true,
+    // Webpack requires help in splitting up node modules from the main app bundle (aurelia, jquery and bootstrap etc.)
+    // If we use the default config we can end up with large app and vendor files > 1MB 
     splitChunks: { // https://webpack.js.org/plugins/split-chunks-plugin/
-      chunks: "initial",
+      chunks: "initial", // default is async, set to initial and then use async inside cacheGroups instead
+      maxInitialRequests: Infinity, // Default is 3, make this unlimited if using HTTP/2
+      maxAsyncRequests: Infinity, // Default is 5, make this unlimited if using HTTP/2
       cacheGroups: { // create separate js files for bluebird, jQuery, bootstrap, aurelia and one for the remaining node modules
         default: false, // disable the built-in groups (default and vendors)
         vendors: false,
-        // enforce: true is required in the definitions below to avoid an issue in production mode
-        // for some reason, in production mode, the aurelia chunk is not created unless "enforce: true" is used despite it being bigger than 30k, processing seems to stop after jquery
         bluebird: {
           test: /[\\/]node_modules[\\/]bluebird[\\/]/,
           name: "vendor.bluebird",
           enforce: true,
-          priority: 60
+          priority: 100
         },
         jquery: {
           test: /[\\/]node_modules[\\/]jquery[\\/]/,
           name: "vendor.jquery",
           enforce: true,
           reuseExistingChunk: true,
-          priority: 50
+          priority: 90
         },
-        fontawesome: { // TODO: enable treeshaking (@fortawesome/free-solid-svg-icons) to reduce the size of font-awesome to only what is used ref: https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
-          name: 'vendor.font-awesome',
-          test:  /[\\/]node_modules[\\/]font-awesome[\\/]/,
+        // fontawesome: { // TODO: enable treeshaking (@fortawesome/free-solid-svg-icons) to reduce the size of font-awesome to only what is used ref: https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
+        //   name: 'vendor.font-awesome',
+        //   test:  /[\\/]node_modules[\\/]font-awesome[\\/]/,
+        //   enforce: true,
+        //   reuseExistingChunk: true,
+        //   priority: 80
+        // },
+        bootstrapExtra: {
+          test: /[\\/]sass[\\/]bootstrap[\\/]bootstrap-extra.(s)?css$/,
+          name: "vendor.bootstrap-extra",
           enforce: true,
-          reuseExistingChunk: true,
-          priority: 40
+          priority: 70
         },
         bootstrap: {
-          test: /[\\/]node_modules[\\/]bootstrap[\\/]|sass[\\/]bootstrap.(s)?css$/,
+          test: /[\\/]node_modules[\\/]bootstrap[\\/]|[\\/]sass[\\/]bootstrap[\\/]/,
           name: "vendor.bootstrap",
+          enforce: true,
+          priority: 60
+        },
+        // split out aurelia-fetch-client here if it being used async:
+        aureliaFetchClient: {
+          test: /[\\/]node_modules[\\/]aurelia-fetch-client[\\/]/,
+          name: "vendor.async.aurelia-fetch-client",
+          chunks: 'async',
           enforce: true,
           priority: 30
         },
-        aureliaFetchClient: {
-          test: /[\\/]node_modules[\\/]aurelia-fetch-client[\\/]/,
-          name: "vendor.app.0",
-          enforce: true,
-          priority: 29
-        },
-        aureliaBinding: {
-          test: /[\\/]node_modules[\\/]aurelia-binding[\\/]/,
-          name: "vendor.app.1",
-          enforce: true,
-          priority: 28
-        },
-        aureliaTemplating: {
-          test: /[\\/]node_modules[\\/]aurelia-templating[\\/]/,
-          name: "vendor.app.2",
-          enforce: true,
-          priority: 26
-        },
-        aurelia: {
-          test: /[\\/]node_modules[\\/]aurelia-.*[\\/]/,
-          name: "vendor.app.3",
-          enforce: true,
-          priority: 20
-        },
-        vendors: { // this picks up everything else being used from node_modules
+        // generic 'initial/sync' vendor node module splits:
+        vendorSplit: { // each node module as separate chunk file if module is bigger than minSize
           test: /[\\/]node_modules[\\/]/,
-          name: "vendor",
-          enforce: true,
-          priority: 10
+          name(module) {
+            //console.log('vendor module.context: ', module.context);
+            // Extract the name of the package from the path segment after node_modules
+            const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
+            return `vendor.${packageName.replace('@', '')}`;
+          },
+          priority: 20,
+          minSize: 20000 // only create if 20k or larger
         },
-        common: { // common chunk
-          name: 'common',
-          minChunks: 2,   // Creates a new chunk if a module is shared between different chunks more than twice
+        vendors: { // picks up everything else being used from node_modules that is < 30KB
+          test: /[\\/]node_modules[\\/]/,
+          name: "vendors",
+          priority: 19,
+          enforce: true, // create chunk regardless of the size of the chunk
+        },
+        // generic 'async' vendor node module splits:
+        vendorAsyncSplit: { // vendor async chunks, create each asynchronously used node module as separate chunk file if module is bigger than minSize
+          test: /[\\/]node_modules[\\/]/,
+          name(module) {
+            //console.log('vendor.async module.context: ', module.context);
+            // Extract the name of the package from the path segment after node_modules
+            const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
+            return `vendor.async.${packageName.replace('@', '')}`;
+          },
+          chunks: 'async',
+          priority: 10,
+          reuseExistingChunk: true,
+          minSize: 10000 // only create if 10k or larger
+        },
+        vendorsAsync: { // vendors async chunk, remaining asynchronously used node modules as single chunk file
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors.async',
+          chunks: 'async',
+          priority: 9,
+          reuseExistingChunk: true,
+          enforce: true // create chunk regardless of the size of the chunk
+        },
+        // generic 'async' common module splits:
+        commonAsync: { // common async chunks, each asynchronously used module as a separate chunk files
+          name(module) {
+            //console.log('common module.context: ', module.context);
+            // Extract the name of the module from last path component. E.g. src/modulename/ results in 'modulename'
+            const packageName = module.context.match(/[^\\/]+(?=\/$|$)/)[0];
+            return `common.async.${packageName.replace('@', '')}`;
+          },
+          minChunks: 2, // Minimum number of chunks that must share a module before splitting
+          chunks: 'async',
+          priority: 1,
+          reuseExistingChunk: true,
+          minSize: 10000 // only create if 10k or larger
+        },
+        commonsAsync: { // commons async chunk, remaining asynchronously used modules as single chunk file
+          name: 'commons.async',
+          minChunks: 2, // Minimum number of chunks that must share a module before splitting
           chunks: 'async',
           priority: 0,
           reuseExistingChunk: true,
-          enforce: true
+          enforce: true // create chunk regardless of the size of the chunk
         }
       }
     },
@@ -172,8 +210,6 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
         // CSS required in templates cannot be extracted safely because Aurelia would try to require it again in runtime
         use: cssRules
       },
-      // TODO: figure out how to extract bootstrap styles into separate css file  https://github.com/webpack-contrib/mini-css-extract-plugin/issues/45
-      // DONE: achieved via optimization.splitChunks instead
       {
         test: /\.sass$|\.scss$/i,
         issuer: /\.[tj]s$/i,
@@ -238,6 +274,10 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
     new ModuleDependenciesPlugin({
       'aurelia-testing': [ './compile-spy', './view-spy' ]
     }),
+    ...when(production,
+      new webpack.HashedModuleIdsPlugin(), // changes module id's to use hashes be based on the relative path of the module
+      [ new webpack.NamedModulesPlugin(), new webpack.NamedChunksPlugin() ] // changes module id's to use the module name
+    ),   
     new HtmlWebpackPlugin({
       template: 'index.ejs',
       minify: production ? {
@@ -251,8 +291,8 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
     }),
     // ref: https://webpack.js.org/plugins/mini-css-extract-plugin/
     ...when(extractCss, new MiniCssExtractPlugin({ // updated to match the naming conventions for the js files
-      filename: production ? '[name].[contenthash].bundle.css' : '[name].[hash].bundle.css',
-      chunkFilename: production ? '[name].[contenthash].chunk.css' : '[name].[hash].chunk.css'
+      filename: production ? 'css/[name].[contenthash].bundle.css' : '[name].[hash].bundle.css',
+      chunkFilename: production ? 'css/[name].[contenthash].chunk.css' : '[name].[hash].chunk.css'
     })),
     // url-loader handles bundling of png/jpg/gif/svg etc.
     // We only need to specify files here that are not referenced in the source files

@@ -1,0 +1,16 @@
+// Use this to import all of bootstrap
+
+// https://getbootstrap.com/docs/4.0/getting-started/theming/
+// Bootstrap sass customisations, import before bootstrap
+@import "bootstrap-custom-variables";
+
+// The ~ (tilde) points to the node_modules folder
+// All of Bootstrap and its default variables
+@import "~bootstrap/scss/bootstrap";
+
+// Alternatively, you may import parts of Boostrap individually as needed.
+// To do that, import the bootstrap-base.scss and bootstrap-extra.scss files
+// into main.ts instead.
+
+// bootstrap overrides for styles that do not have Sass variables defined, must be after importing bootstrap
+@import "bootstrap-custom-override";
