@@ -72,6 +72,7 @@
     "optimize-css-assets-webpack-plugin": "^5.0.1",
     "plugin-error": "^1.0.1",
     "postcss-loader": "^3.0.0",
+    "preload-webpack-plugin": "https://github.com/chrisckc/preload-webpack-plugin/tarball/master",
     "protractor": "^5.4.1",
     "sass-loader": "^7.1.0",
     "style-loader": "^0.23.1",
