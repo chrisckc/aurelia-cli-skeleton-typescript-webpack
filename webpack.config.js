@@ -73,9 +73,9 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
       chunks: "initial", // default is async, set to initial and then use async inside cacheGroups instead
       maxInitialRequests: Infinity, // Default is 3, make this unlimited if using HTTP/2
       maxAsyncRequests: Infinity, // Default is 5, make this unlimited if using HTTP/2
-      cacheGroups: { // create separate js files for bluebird, jQuery, bootstrap, aurelia and one for the remaining node modules
-        default: false, // disable the built-in groups (default and vendors)
-        vendors: false,
+      cacheGroups: {
+        default: false, // disable the built-in groups, default & vendors (vendors is overwritten below)
+        // create separate js chunk files for bluebird, jQuery, bootstrap
         bluebird: {
           test: /[\\/]node_modules[\\/]bluebird[\\/]/,
           name: "vendor.bluebird",
@@ -108,14 +108,6 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
           enforce: true,
           priority: 60
         },
-        // split out aurelia-fetch-client here if it being used async:
-        aureliaFetchClient: {
-          test: /[\\/]node_modules[\\/]aurelia-fetch-client[\\/]/,
-          name: "vendor.async.aurelia-fetch-client",
-          chunks: 'async',
-          enforce: true,
-          priority: 30
-        },
         // generic 'initial/sync' vendor node module splits:
         vendorSplit: { // each node module as separate chunk file if module is bigger than minSize
           test: /[\\/]node_modules[\\/]/,
@@ -128,10 +120,16 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
           priority: 20,
           minSize: 20000 // only create if 20k or larger
         },
-        vendors: { // picks up everything else being used from node_modules that is < 30KB
+        aurelia: { // picks up any remaining aurelia modules from node_modules that are < 20KB
+          test: /[\\/]node_modules[\\/]aurelia-.*[\\/]/,
+          name: "vendor.aurelia",
+          enforce: true,
+          priority: 19
+        },
+        vendors: { // picks up everything else being used from node_modules that is < 20KB
           test: /[\\/]node_modules[\\/]/,
           name: "vendors",
-          priority: 19,
+          priority: 15,
           enforce: true, // create chunk regardless of the size of the chunk
         },
         // generic 'async' vendor node module splits:
@@ -148,11 +146,18 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
           reuseExistingChunk: true,
           minSize: 10000 // only create if 10k or larger
         },
+        aureliaFetchClient: { // split out aurelia-fetch-client here if it being used async (its smaller than 10k so will not have been created by vendorAsyncSplit)
+          test: /[\\/]node_modules[\\/]aurelia-fetch-client[\\/]/,
+          name: "vendor.async.aurelia-fetch-client",
+          chunks: 'async',
+          enforce: true,
+          priority: 9
+        },
         vendorsAsync: { // vendors async chunk, remaining asynchronously used node modules as single chunk file
           test: /[\\/]node_modules[\\/]/,
           name: 'vendors.async',
           chunks: 'async',
-          priority: 9,
+          priority: 5,
           reuseExistingChunk: true,
           enforce: true // create chunk regardless of the size of the chunk
         },
