@@ -25,7 +25,10 @@ function runWebpack(done) {
 
   if (project.platform.hmr || CLIOptions.hasFlag('hmr')) {
     config.plugins.push(new webpack.HotModuleReplacementPlugin());
-    config.entry.app.unshift(`webpack-dev-server/client?http://${opts.host}:${opts.port}/`, 'webpack/hot/dev-server');
+    config.entry.app.unshift(`webpack-dev-server/client`, 'webpack/hot/dev-server');
+  } else {
+    // removed "<script src="/webpack-dev-server.js"></script>" from index.ejs and added this instead
+    config.entry.app.unshift(`webpack-dev-server/client`);
   }
 
   const compiler = webpack(config);
