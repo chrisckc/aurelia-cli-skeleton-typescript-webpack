@@ -297,6 +297,7 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
         title, server, baseUrl
       }
     }),
+    // preload css and other assets https://github.com/chrisckc/preload-webpack-plugin
     new PreloadWebpackPlugin({
       rel: 'preload',
       include: 'allAssets', // options: 'allAssets', initial' , 'asyncChunks' , 'allChunks'
