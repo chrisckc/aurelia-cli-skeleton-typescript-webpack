@@ -63,6 +63,10 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
   },
   optimization: {
     runtimeChunk: true,
+    // moduleIds is the replacement for HashedModuleIdsPlugin and NamedModulesPlugin which were
+    // deprecated in https://github.com/webpack/webpack/releases/tag/v4.16.0
+    // in production mode, changes module id's to use hashes be based on the relative path of the module, otherwise use the module name
+    moduleIds: production ? 'hashed' : 'named',
     // Webpack requires help in splitting up node modules from the main app bundle (aurelia, jquery and bootstrap etc.)
     // If we use the default config we can end up with large app and vendor files > 1MB 
     splitChunks: { // https://webpack.js.org/plugins/split-chunks-plugin/
@@ -176,6 +180,8 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
         }
       }
     },
+    // Setting optimization.minimizer overrides the defaults provided by webpack
+    // so when adding OptimizeCSSAssetsPlugin to the minimizer config, we need to add UglifyJsPlugin to match the defaults otherwise our js won't be minimised.
     minimizer: [
       new UglifyJsPlugin({
         cache: true,
@@ -273,11 +279,7 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
     }),
     new ModuleDependenciesPlugin({
       'aurelia-testing': [ './compile-spy', './view-spy' ]
-    }),
-    ...when(production,
-      new webpack.HashedModuleIdsPlugin(), // changes module id's to use hashes be based on the relative path of the module
-      [ new webpack.NamedModulesPlugin(), new webpack.NamedChunksPlugin() ] // changes module id's to use the module name
-    ),   
+    }), 
     new HtmlWebpackPlugin({
       template: 'index.ejs',
       minify: production ? {

@@ -4,17 +4,17 @@
 // Main layout styles
 
 // makes the navbar look more like bootstrap v3
-.navbar {
-  border: 1px solid transparent;
+nav.au-navbar {
+  border-bottom: 1px solid transparent;
   border-color: $gray-200;
   min-height: $navbar-height;
-  padding: 0;
+  padding: 0 1rem;
 }
 
 // center the nav logo
 .navbar-brand {
-  padding: 0.6rem 0.5rem;
-  min-height: $navbar-height;
+  padding: 0rem 0.5rem;
+  align-items: center;
 }
 
 .navbar-toggler {
@@ -24,18 +24,14 @@
 .nav-item {
   min-height: $navbar-height;
   padding: 0 0.5rem;
+  display: flex;
+  align-items: center;
 }
 
 // makes the navbar active link look more like bootstrap v3
 nav .active {
   color: #555;
   background-color: $gray-200
-}
-
-// center the nav links
-.nav-link {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
 }
 
 
