@@ -16,7 +16,13 @@ Added Sass support to webpack config and scss files to allow bootstrap v4 custom
 
 Updated webpack config to split out the vendor bundle into smaller more sensible sizes. Separated bootstrap and jQuery into their own bundles, separated Aurelia into 3 separate bundles as its still too big as a single bundle.
 
-Updated the nav-bar style to make it look more like the previous bootstrap v3 nav-bar in the Aurelia skeletons
+Updated the Bootstrap v4 nav-bar style to make it look more like the previous Bootstrap v3 nav-bar in the Aurelia skeletons
+
+Incorporated suggestions from here: https://github.com/aurelia/cli/issues/968 refer to the image-test view
+
+Incorporated fix: https://github.com/aurelia/cli/issues/967
+
+Incorporated fix: https://github.com/aurelia/cli/issues/966
 
 Incorporated fix from here: https://github.com/aurelia/cli/issues/956
 
