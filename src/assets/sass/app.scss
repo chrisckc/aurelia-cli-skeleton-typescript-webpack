@@ -8,13 +8,21 @@ nav.au-navbar {
   border-bottom: 1px solid transparent;
   border-color: $gray-200;
   min-height: $navbar-height;
-  padding: 0 1rem;
+  padding: 0;
 }
 
 // center the nav logo
 .navbar-brand {
-  padding: 0rem 0.5rem;
+  padding: 0rem 1rem;
+  margin-right: 0;
+  min-height: $navbar-height;
+  display: flex;
   align-items: center;
+}
+
+.au-navbar .navbar-nav .nav-link {
+  padding-right: 0.5rem;
+  padding-left: 0.5rem;
 }
 
 .navbar-toggler {
