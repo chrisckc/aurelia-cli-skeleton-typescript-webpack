@@ -85,7 +85,7 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
       minSize: 10000, // chunk is only created if it would be bigger than minSize
       maxSize: 40000, // splits chunks if bigger than 40k, added in webpack v4.15
       cacheGroups: { // create separate js files for bluebird, jQuery, bootstrap, aurelia and one for the remaining node modules
-        default: false, // disable the built-in groups (default and vendors)
+        default: false, // disable the built-in groups, default & vendors (vendors is overwritten below)
         // TODO: enable treeshaking (@fortawesome/free-solid-svg-icons) to reduce the size of font-awesome to only what is used ref: https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
         fontawesome: { // separates out font-awesome (font-awesome is only css/fonts) from app css
           name: 'vendor.font-awesome',
