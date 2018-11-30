@@ -84,7 +84,7 @@
     "url-loader": "^1.1.1",
     "vinyl-fs": "^3.0.3",
     "wait-on": "^3.1.0",
-    "webpack": "^4.20.2",
+    "webpack": "^4.26.1",
     "webpack-bundle-analyzer": "latest",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.1.9"

@@ -1,7 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const PreloadWebpackPlugin = require('preload-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require("terser-webpack-plugin");
@@ -80,10 +79,11 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
     splitChunks: { 
       hidePathInfo: true, // prevents the path from being used in the filename when using maxSize
       chunks: "initial", // default is async, set to initial and then use async inside cacheGroups instead
-      maxInitialRequests: 6, // Default is 3, make this unlimited if using HTTP/2
-      //maxAsyncRequests: Infinity, // Default is 5, make this unlimited if using HTTP/2
+      maxInitialRequests: Infinity, // Default is 3, make this unlimited if using HTTP/2
+      maxAsyncRequests: Infinity, // Default is 5, make this unlimited if using HTTP/2
       // sizes are compared against source before minification
-      maxSize: 200000, // splits chunks if bigger than 200k, added in webpack v4.15
+      minSize: 10000, // chunk is only created if it would be bigger than minSize
+      maxSize: 40000, // splits chunks if bigger than 40k, added in webpack v4.15
       cacheGroups: { // create separate js files for bluebird, jQuery, bootstrap, aurelia and one for the remaining node modules
         default: false, // disable the built-in groups (default and vendors)
         // TODO: enable treeshaking (@fortawesome/free-solid-svg-icons) to reduce the size of font-awesome to only what is used ref: https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
@@ -105,10 +105,36 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
           priority: 60,
           enforce: true
         },
+        // generic 'initial/sync' vendor node module splits: separates out larger modules
+        vendorSplit: { // each node module as separate chunk file if module is bigger than minSize
+          test: /[\\/]node_modules[\\/]/,
+          name(module) {
+            //console.log('vendor module.context: ', module.context);
+            // Extract the name of the package from the path segment after node_modules
+            const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
+            return `vendor.${packageName.replace('@', '')}`;
+          },
+          priority: 20
+        },
         vendors: { // picks up everything else being used from node_modules that is less than minSize
           test: /[\\/]node_modules[\\/]/,
           name: "vendors",
           priority: 19,
+          enforce: true // create chunk regardless of the size of the chunk
+        },
+        // generic 'async' vendor node module splits: separates out larger modules
+        vendorAsyncSplit: { // vendor async chunks, create each asynchronously used node module as separate chunk file if module is bigger than minSize
+          test: /[\\/]node_modules[\\/]/,
+          name(module) {
+            //console.log('vendor.async module.context: ', module.context);
+            // Extract the name of the package from the path segment after node_modules
+            const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
+            return `vendor.async.${packageName.replace('@', '')}`;
+          },
+          chunks: 'async',
+          priority: 10,
+          reuseExistingChunk: true,
+          minSize: 5000 // only create if 5k or larger
         },
         vendorsAsync: { // vendors async chunk, remaining asynchronously used node modules as single chunk file
           test: /[\\/]node_modules[\\/]/,
@@ -117,6 +143,20 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
           priority: 9,
           reuseExistingChunk: true,
           enforce: true // create chunk regardless of the size of the chunk
+        },
+        // generic 'async' common module splits: separates out larger modules
+        commonAsync: { // common async chunks, each asynchronously used module as a separate chunk files
+          name(module) {
+            //console.log('common module.context: ', module.context);
+            // Extract the name of the module from last path component. 'src/modulename/' results in 'modulename'
+            const moduleName = module.context.match(/[^\\/]+(?=\/$|$)/)[0];
+            return `common.async.${moduleName.replace('@', '')}`;
+          },
+          minChunks: 2, // Minimum number of chunks that must share a module before splitting
+          chunks: 'async',
+          priority: 1,
+          reuseExistingChunk: true,
+          minSize: 5000 // only create if 5k or larger
         },
         commonsAsync: { // commons async chunk, remaining asynchronously used modules as single chunk file
           name: 'commons.async',
@@ -230,6 +270,7 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
     }), 
     new HtmlWebpackPlugin({
       template: 'index.ejs',
+      // sorts the chunks according to the chunkOrderMatches array, then by descending size
       chunksSortMode: (chunkA, chunkB) => {
         let chunkOrderMatches = [ /^vendor/ ];
         let orderA = IndexInRegexArray(chunkA.names[0], chunkOrderMatches, 9999);
@@ -246,13 +287,6 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
         // available in index.ejs //
         title, server, baseUrl
       }
-    }),
-    // preload css and other assets https://github.com/chrisckc/preload-webpack-plugin
-    new PreloadWebpackPlugin({
-      rel: 'preload',
-      include: 'allAssets', // options: 'allAssets', initial' , 'asyncChunks' , 'allChunks'
-      fileWhitelist: [ /\.css$/, /\.woff2$/ ],
-      applyCss: true // adds onload="this.onload=null;this.rel='stylesheet'" attributes to css links
     }),
     // ref: https://webpack.js.org/plugins/mini-css-extract-plugin/
     ...when(extractCss, new MiniCssExtractPlugin({ // updated to match the naming conventions for the js files
