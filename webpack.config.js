@@ -4,8 +4,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const PreloadWebpackPlugin = require('preload-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const TerserPlugin = require("terser-webpack-plugin");
-const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const TerserPlugin = require('terser-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin');
 const project = require('./aurelia_project/aurelia.json');
 const { AureliaPlugin, ModuleDependenciesPlugin } = require('aurelia-webpack-plugin');
@@ -79,13 +79,13 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
     // https://webpack.js.org/plugins/split-chunks-plugin/
     splitChunks: { 
       hidePathInfo: true, // prevents the path from being used in the filename when using maxSize
-      chunks: "initial", // default is async, set to initial and then use async inside cacheGroups instead
-      maxInitialRequests: 6, // Default is 3, make this unlimited if using HTTP/2
+      chunks: 'initial', // default is async, set to initial and then use async inside cacheGroups instead
+      //maxInitialRequests: 6, // Default is 3, make this unlimited if using HTTP/2
       //maxAsyncRequests: Infinity, // Default is 5, make this unlimited if using HTTP/2
       // sizes are compared against source before minification
       maxSize: 200000, // splits chunks if bigger than 200k, added in webpack v4.15
       cacheGroups: { // create separate js files for bluebird, jQuery, bootstrap, aurelia and one for the remaining node modules
-        default: false, // disable the built-in groups (default and vendors)
+        default: false, // disable the built-in groups, default & vendors (vendors is overwritten below)
         // TODO: enable treeshaking (@fortawesome/free-solid-svg-icons) to reduce the size of font-awesome to only what is used ref: https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
         fontawesome: { // separates out font-awesome (font-awesome is only css/fonts) from app css
           name: 'vendor.font-awesome',
@@ -95,20 +95,22 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
         },
         bootstrapExtra: { // separates out bootstrap css from app css
           test: /[\\/]sass[\\/]bootstrap[\\/]bootstrap-extra.(s)?css$/,
-          name: "vendor.bootstrap-extra",
+          name: 'vendor.bootstrap-extra',
           priority: 70,
           enforce: true
         },
         bootstrap: { // separates out bootstrap (js and css) from app css
           test: /[\\/]node_modules[\\/]bootstrap[\\/]|[\\/]sass[\\/]bootstrap[\\/]/,
-          name: "vendor.bootstrap",
+          name: 'vendor.bootstrap',
           priority: 60,
           enforce: true
         },
-        vendors: { // picks up everything else being used from node_modules that is less than minSize
+        vendors: { // picks up everything from node_modules as long as the sum of node modules is larger than minSize
           test: /[\\/]node_modules[\\/]/,
-          name: "vendors",
+          name: 'vendors',
           priority: 19,
+          enforce: true, // causes maxInitialRequests to be ignored, minSize still respected if specified in cacheGroup
+          minSize: 30000 // use the default minSize
         },
         vendorsAsync: { // vendors async chunk, remaining asynchronously used node modules as single chunk file
           test: /[\\/]node_modules[\\/]/,
@@ -116,7 +118,7 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
           chunks: 'async',
           priority: 9,
           reuseExistingChunk: true,
-          enforce: true // create chunk regardless of the size of the chunk
+          minSize: 10000  // use smaller minSize to avoid too much potential bundle bloat due to module duplication.
         },
         commonsAsync: { // commons async chunk, remaining asynchronously used modules as single chunk file
           name: 'commons.async',
@@ -124,7 +126,7 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
           chunks: 'async',
           priority: 0,
           reuseExistingChunk: true,
-          enforce: true // create chunk regardless of the size of the chunk
+          minSize: 10000  // use smaller minSize to avoid too much potential bundle bloat due to module duplication.
         }
       }
     },
@@ -175,7 +177,7 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
         use: sassRules
       },
       { test: /\.html$/i, loader: 'html-loader' },
-      { test: /\.tsx?$/i, loader: "ts-loader" },
+      { test: /\.tsx?$/i, loader: 'ts-loader' },
       // use Bluebird as the global Promise implementation:
       { test: /[\/\\]node_modules[\/\\]bluebird[\/\\].+\.js$/, loader: 'expose-loader?Promise' },
       // exposes jQuery globally as $ and as jQuery:
@@ -212,18 +214,18 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
       'window.jQuery': 'jquery',
       Popper: ['popper.js', 'default'], // Bootstrap 4 Dependency.
       // We can provide the bootstrap components here, only use this method instead of importing the bootstrap components in main.ts
-      // if there is no need to reference bootstrap's jQuery extensions in code eg. $("selector").collapse('hide');
-      // Alert: "exports-loader?Alert!bootstrap/js/dist/alert",
-      // Button: "exports-loader?Button!bootstrap/js/dist/button",
-      // Carousel: "exports-loader?Carousel!bootstrap/js/dist/carousel",
-      // Collapse: "exports-loader?Collapse!bootstrap/js/dist/collapse",
-      // Dropdown: "exports-loader?Dropdown!bootstrap/js/dist/dropdown",
-      // Modal: "exports-loader?Modal!bootstrap/js/dist/modal",
-      // Popover: "exports-loader?Popover!bootstrap/js/dist/popover",
-      // Scrollspy: "exports-loader?Scrollspy!bootstrap/js/dist/scrollspy",
-      // Tab: "exports-loader?Tab!bootstrap/js/dist/tab",
-      // Tooltip: "exports-loader?Tooltip!bootstrap/js/dist/tooltip",
-      // Util: "exports-loader?Util!bootstrap/js/dist/util",
+      // if there is no need to reference bootstrap's jQuery extensions in code eg. $('selector').collapse('hide');
+      // Alert: 'exports-loader?Alert!bootstrap/js/dist/alert',
+      // Button: 'exports-loader?Button!bootstrap/js/dist/button',
+      // Carousel: 'exports-loader?Carousel!bootstrap/js/dist/carousel',
+      // Collapse: 'exports-loader?Collapse!bootstrap/js/dist/collapse',
+      // Dropdown: 'exports-loader?Dropdown!bootstrap/js/dist/dropdown',
+      // Modal: 'exports-loader?Modal!bootstrap/js/dist/modal',
+      // Popover: 'exports-loader?Popover!bootstrap/js/dist/popover',
+      // Scrollspy: 'exports-loader?Scrollspy!bootstrap/js/dist/scrollspy',
+      // Tab: 'exports-loader?Tab!bootstrap/js/dist/tab',
+      // Tooltip: 'exports-loader?Tooltip!bootstrap/js/dist/tooltip',
+      // Util: 'exports-loader?Util!bootstrap/js/dist/util',
     }),
     new ModuleDependenciesPlugin({
       'aurelia-testing': [ './compile-spy', './view-spy' ]
