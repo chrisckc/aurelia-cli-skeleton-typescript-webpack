@@ -108,7 +108,6 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
           test: /[\\/]node_modules[\\/]/,
           name: "vendors",
           priority: 19,
-          enforce: true // create chunk regardless of the size of the chunk
         },
         vendorsAsync: { // vendors async chunk, remaining asynchronously used node modules as single chunk file
           test: /[\\/]node_modules[\\/]/,
