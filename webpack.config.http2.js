@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const PreloadWebpackPlugin = require('preload-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require("terser-webpack-plugin");
@@ -287,6 +288,13 @@ module.exports = ({production, server, extractCss, coverage, analyze, karma} = {
         // available in index.ejs //
         title, server, baseUrl
       }
+    }),
+    // preload css and other assets https://github.com/chrisckc/preload-webpack-plugin
+    new PreloadWebpackPlugin({
+      rel: 'preload',
+      include: 'allAssets', // options: 'allAssets', initial' , 'asyncChunks' , 'allChunks'
+      fileWhitelist: [ /\.css$/, /\.woff2$/ ],
+      applyCss: true // adds onload="this.onload=null;this.rel='stylesheet'" attributes to css links
     }),
     // ref: https://webpack.js.org/plugins/mini-css-extract-plugin/
     ...when(extractCss, new MiniCssExtractPlugin({ // updated to match the naming conventions for the js files
